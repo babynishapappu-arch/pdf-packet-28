@@ -24,9 +24,6 @@ const PacketGeneration = ({
   const totalSize = selectedDocuments.filter(doc => doc.selected).reduce((sum, doc) => sum + (doc.document.size || 0), 0);
   const sortedDocs = selectedDocuments.filter(doc => doc.selected).sort((a, b) => a.order - b.order);
 
-  console.log('PacketGeneration - selectedDocuments:', selectedDocuments);
-  console.log('PacketGeneration - sortedDocs (after filter and sort):', sortedDocs);
-
   // Helper function to map selected documents to submittalType checkboxes
   const getSubmittalTypeFromDocuments = () => {
     const submittalType = {
