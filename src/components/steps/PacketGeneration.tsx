@@ -130,9 +130,14 @@ const PacketGeneration = ({
     try {
       // Ensure all formData fields are provided, using empty strings or defaults
       const preparedFormData = {
-        ...formData,
+        productType: formData.productType || 'structural-floor',
+        projectName: formData.projectName || 'Untitled',
+        submittedTo: formData.submittedTo || '',
+        preparedBy: formData.preparedBy || '',
         emailAddress: formData.emailAddress || '',
         phoneNumber: formData.phoneNumber || '',
+        date: formData.date || new Date().toLocaleDateString(),
+        projectNumber: formData.projectNumber || '',
         productSize: formData.productSize || '3/4-in (20mm)',
         status: formData.status || {
           forReview: false,
@@ -141,15 +146,15 @@ const PacketGeneration = ({
           forInformationOnly: false,
         },
         submittalType: getSubmittalTypeFromDocuments(),
-        date: formData.date || new Date().toLocaleDateString(),
-      };
-      console.log('Prepared form data for PDF:', preparedFormData); // Debug output
+      } as ProjectFormData;
+
+      console.log('Prepared form data for PDF:', preparedFormData);
       const pdfBytes = await pdfService.generatePacket(preparedFormData, sortedDocs);
-      pdfService.downloadPDF(pdfBytes, `${formData.projectName || 'Untitled'}_Packet.pdf`);
+      await pdfService.downloadPDF(pdfBytes, `${formData.projectName || 'Untitled'}_Packet.pdf`);
       onNext();
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF packet.');
+      alert('Failed to generate PDF packet: ' + (error as Error).message);
     } finally {
       onSetGenerating(false);
     }
@@ -161,9 +166,14 @@ const PacketGeneration = ({
     onSetGenerating(true);
     try {
       const preparedFormData = {
-        ...formData,
+        productType: formData.productType || 'structural-floor',
+        projectName: formData.projectName || 'Untitled',
+        submittedTo: formData.submittedTo || '',
+        preparedBy: formData.preparedBy || '',
         emailAddress: formData.emailAddress || '',
         phoneNumber: formData.phoneNumber || '',
+        date: formData.date || new Date().toLocaleDateString(),
+        projectNumber: formData.projectNumber || '',
         productSize: formData.productSize || '3/4-in (20mm)',
         status: formData.status || {
           forReview: false,
@@ -172,15 +182,15 @@ const PacketGeneration = ({
           forInformationOnly: false,
         },
         submittalType: getSubmittalTypeFromDocuments(),
-        date: formData.date || new Date().toLocaleDateString(),
-      };
+      } as ProjectFormData;
+
       console.log('Prepared form data for preview:', preparedFormData);
       const pdfBytes = await pdfService.generatePacket(preparedFormData, sortedDocs);
-      
+
       // Create a blob URL for the PDF
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
-      
+
       // Open the PDF in a new tab
       const newWindow = window.open('', '_blank');
       if (newWindow) {
@@ -190,16 +200,16 @@ const PacketGeneration = ({
             <head>
               <title>PDF Preview - ${formData.projectName || 'Document Packet'}</title>
               <style>
-                body, html { 
-                  margin: 0; 
-                  padding: 0; 
+                body, html {
+                  margin: 0;
+                  padding: 0;
                   height: 100%;
                   overflow: hidden;
                   background-color: #525252;
                 }
-                iframe { 
-                  width: 100%; 
-                  height: 100%; 
+                iframe {
+                  width: 100%;
+                  height: 100%;
                   border: none;
                 }
                 .toolbar {
@@ -236,11 +246,11 @@ const PacketGeneration = ({
       } else {
         // Fallback to download if popup is blocked
         alert('Popup was blocked. Please allow popups for this site to view the preview.');
-        pdfService.downloadPdf(pdfBytes, `${formData.projectName || 'preview'}_packet.pdf`);
+        await pdfService.downloadPDF(pdfBytes, `${formData.projectName || 'preview'}_packet.pdf`);
       }
     } catch (error) {
       console.error('Error generating PDF for preview:', error);
-      alert('Failed to generate PDF preview. ' + (error as Error).message);
+      alert('Failed to generate PDF preview: ' + (error as Error).message);
     } finally {
       onSetGenerating(false);
     }
