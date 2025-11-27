@@ -256,6 +256,9 @@ export default function DocumentOrdering({
     .filter(doc => doc.selected)
     .sort((a, b) => a.order - b.order)
 
+  console.log('DocumentOrdering - selectedDocuments:', selectedDocuments)
+  console.log('DocumentOrdering - sortedDocuments (filtered and sorted):', sortedDocuments)
+
   // Check if document is selected
   const isDocumentSelected = (documentId: string): boolean => {
     return selectedDocuments.some(doc => doc.document.id === documentId && doc.selected)
@@ -264,27 +267,39 @@ export default function DocumentOrdering({
   // Toggle document selection
   const toggleDocument = (document: typeof availableDocuments[0]) => {
     const isSelected = isDocumentSelected(document.id)
+    console.log('Toggle document:', { documentId: document.id, documentName: document.name, currentlySelected: isSelected })
 
     if (isSelected) {
       const updated = selectedDocuments.map(doc =>
         doc.document.id === document.id ? { ...doc, selected: false } : doc
       )
+      console.log('Updated selectedDocuments after deselect:', updated)
       onUpdateSelectedDocuments(updated)
     } else {
       const existingDoc = selectedDocuments.find(doc => doc.document.id === document.id)
       if (existingDoc) {
-        const updated = selectedDocuments.map(doc =>
-          doc.document.id === document.id ? { ...doc, selected: true } : doc
-        )
+        // Mark existing document as selected and recalculate orders
+        const updated = selectedDocuments.map(doc => {
+          if (doc.document.id === document.id) {
+            return { ...doc, selected: true }
+          }
+          return doc
+        })
+        console.log('Updated selectedDocuments after reselect:', updated)
         onUpdateSelectedDocuments(updated)
       } else {
+        // Get the next order number from selected documents only
+        const selectedCount = selectedDocuments.filter(d => d.selected).length
         const newSelectedDoc: SelectedDocument = {
           id: generateId(),
           document,
-          order: selectedDocuments.length,
+          order: selectedCount,
           selected: true,
         }
-        onUpdateSelectedDocuments([...selectedDocuments, newSelectedDoc])
+        console.log('New selectedDocument created:', newSelectedDoc)
+        const newList = [...selectedDocuments, newSelectedDoc]
+        console.log('New selectedDocuments list:', newList)
+        onUpdateSelectedDocuments(newList)
       }
     }
   }
