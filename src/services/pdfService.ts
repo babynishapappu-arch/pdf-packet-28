@@ -72,15 +72,11 @@ class PDFService {
     }
 
     const submittalAndProductInfoPageCount = finalPdf.getPageCount()
+    const tocPageIndex = submittalAndProductInfoPageCount
 
-    // 3. Insert placeholder TOC
-    const tocPageNumber = submittalAndProductInfoPageCount + 1
-    const tocPage = await this.createTableOfContents(finalPdf, [], tocPageNumber)
-    finalPdf.insertPage(submittalAndProductInfoPageCount, tocPage)
-
-    // 4. Add document sections
+    // 3. Add document sections first (without TOC)
     const documentSections: DocumentSection[] = []
-    let currentPageNumber = finalPdf.getPageCount() + 1
+    let currentPageNumber = submittalAndProductInfoPageCount + 2 // +2 because TOC will be inserted at position after submittal pages
 
     for (const doc of sortedDocs) {
       try {
@@ -118,15 +114,15 @@ class PDFService {
       }
     }
 
-    // 5. Update TOC with actual document sections
-    const updatedTocPage = await this.createTableOfContents(finalPdf, documentSections, tocPageNumber)
-    finalPdf.removePage(submittalAndProductInfoPageCount)
-    finalPdf.insertPage(submittalAndProductInfoPageCount, updatedTocPage)
+    // 4. Now insert TOC with actual document sections (only once)
+    const tocPageNumber = tocPageIndex + 1
+    const tocPage = await this.createTableOfContents(finalPdf, documentSections, tocPageNumber)
+    finalPdf.insertPage(tocPageIndex, tocPage)
 
-    // 6. Add page numbers to specific pages only
+    // 5. Add page numbers to specific pages only
     await this.addSelectivePageNumbers(
       finalPdf,
-      submittalAndProductInfoPageCount,
+      tocPageIndex,
       documentSections
     )
 
