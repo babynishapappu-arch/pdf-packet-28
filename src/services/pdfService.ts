@@ -35,7 +35,8 @@ class PDFService {
 
   async generatePacket(
     formData: ProjectFormData,
-    selectedDocuments: SelectedDocument[]
+    selectedDocuments: SelectedDocument[],
+    allAvailableDocuments?: Document[]
   ): Promise<Uint8Array> {
     console.log('Starting PDF generation...')
     const finalPdf = await PDFDocument.create()
@@ -48,11 +49,14 @@ class PDFService {
     // Get all document names for the submittal form
     const selectedDocumentNames = sortedDocs.map(doc => doc.document.name)
 
+    // Filter available documents to match product type if provided
+    const docsForCoverPage = allAvailableDocuments || sortedDocs.map(doc => doc.document)
+
     // 1. Add Cover Page (Submittal Form)
     let submittalFormPageCount = 0
     try {
       console.log('Adding submittal form...')
-      await this.addCoverPage(finalPdf, formData, selectedDocumentNames)
+      await this.addCoverPage(finalPdf, formData, selectedDocumentNames, docsForCoverPage)
       submittalFormPageCount = finalPdf.getPageCount()
       console.log(`Added ${submittalFormPageCount} submittal form pages`)
     } catch (error) {
@@ -135,7 +139,8 @@ class PDFService {
   private async addCoverPage(
     pdf: PDFDocument,
     projectData: ProjectFormData,
-    selectedDocumentNames: string[]
+    selectedDocumentNames: string[],
+    availableDocuments: Document[]
   ): Promise<void> {
     let page = pdf.addPage(PageSizes.Letter)
     const { width, height } = page.getSize()
@@ -331,13 +336,14 @@ class PDFService {
     })
     currentY -= 20
 
-    // Draw selected documents
+    // Draw all available documents with checkmarks for selected ones
     const minYForContent = 100
     let currentPage = page
     const checkboxLineSpacing = 14
 
-    for (let i = 0; i < selectedDocumentNames.length; i++) {
-      const docName = selectedDocumentNames[i]
+    for (let i = 0; i < availableDocuments.length; i++) {
+      const doc = availableDocuments[i]
+      const isSelected = selectedDocumentNames.includes(doc.name)
 
       if (currentY < minYForContent) {
         currentPage = pdf.addPage(PageSizes.Letter)
@@ -372,15 +378,17 @@ class PDFService {
         borderWidth: 0.5,
       })
 
-      currentPage.drawText('X', {
-        x: labelX + 3,
-        y: checkboxY + 2,
-        size: 9,
-        font: boldFont,
-        color: nexgenBlue,
-      })
+      if (isSelected) {
+        currentPage.drawText('X', {
+          x: labelX + 3,
+          y: checkboxY + 2,
+          size: 9,
+          font: boldFont,
+          color: nexgenBlue,
+        })
+      }
 
-      currentPage.drawText(docName, {
+      currentPage.drawText(doc.name, {
         x: labelX + checkboxSize + 5,
         y: checkboxY + 2,
         size: 10,

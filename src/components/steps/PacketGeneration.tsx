@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { pdfService } from '@/services/pdfService';
+import { documentService } from '@/services/documentService';
 import type { SelectedDocument, ProjectFormData } from '@/types';
 import { cn, formatFileSize } from '@/utils';
 
@@ -128,6 +129,11 @@ const PacketGeneration = ({
     if (isGenerating) return;
     onSetGenerating(true);
     try {
+      // Fetch all available documents for the product type
+      const availableDocuments = await documentService.getDocumentsByProductType(
+        formData.productType || 'structural-floor'
+      );
+
       // Ensure all formData fields are provided, using empty strings or defaults
       const preparedFormData = {
         productType: formData.productType || 'structural-floor',
@@ -149,7 +155,8 @@ const PacketGeneration = ({
       } as ProjectFormData;
 
       console.log('Prepared form data for PDF:', preparedFormData);
-      const pdfBytes = await pdfService.generatePacket(preparedFormData, sortedDocs);
+      console.log('Available documents for PDF:', availableDocuments);
+      const pdfBytes = await pdfService.generatePacket(preparedFormData, sortedDocs, availableDocuments);
       await pdfService.downloadPDF(pdfBytes, `${formData.projectName || 'Untitled'}_Packet.pdf`);
       onNext();
     } catch (error) {
@@ -165,6 +172,11 @@ const PacketGeneration = ({
     if (isGenerating) return;
     onSetGenerating(true);
     try {
+      // Fetch all available documents for the product type
+      const availableDocuments = await documentService.getDocumentsByProductType(
+        formData.productType || 'structural-floor'
+      );
+
       const preparedFormData = {
         productType: formData.productType || 'structural-floor',
         projectName: formData.projectName || 'Untitled',
@@ -185,7 +197,8 @@ const PacketGeneration = ({
       } as ProjectFormData;
 
       console.log('Prepared form data for preview:', preparedFormData);
-      const pdfBytes = await pdfService.generatePacket(preparedFormData, sortedDocs);
+      console.log('Available documents for preview:', availableDocuments);
+      const pdfBytes = await pdfService.generatePacket(preparedFormData, sortedDocs, availableDocuments);
 
       // Create a blob URL for the PDF
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
